@@ -1,0 +1,12 @@
+Web VPython 3.2
+# BRIDGE
+# 1. Make a list of cylinder objects with MASS
+# 2. Apply a weight, 
+
+planks = []
+plankLength = 4
+numPlanks = 10
+spacing = 5
+
+for i in range(numPlanks):
+    planks[i] = cylinder(pos = vec(-numPlanks*plankLength/2 + spacing*i, 0, 0)
