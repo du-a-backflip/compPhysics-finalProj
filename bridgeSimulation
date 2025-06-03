@@ -4,7 +4,7 @@ scene.camera.pos = vector(0, 10, 70)
 planks = []
 plankLength = 4
 plankRadius = 2
-numPlanks = 10
+numPlanks = 5
 spacing = 5
 
 springs = []
@@ -27,7 +27,7 @@ cliff2 = box(pos = vec((numPlanks-1)*spacing/2+4.5, -5, plankLength/2), axis = v
 ### FORCES
 gravity = vector(0, 9.81, 0)
 plankMass = 50
-kCoef = 1000
+kCoef = 1500
 dCoef = 2*sqrt(plankMass*kCoef)
 
 ### USER INPUT
@@ -54,7 +54,7 @@ DCoefs = wtext(text='{:1.2f}'.format(changeDConstSlider.value) + ' * Natural Dam
 def changeDConst(evt):
     DCoefs.text = '{:1.2f}'.format(evt.value) + ' * Natural Damping Constant' + '\n\n'
     
-changeMassSlider = slider(bind=changeMass, min = 25, max = 75, step = 1, value = plankMass, align = 'left')
+changeMassSlider = slider(bind=changeMass, min = 50, max = 200, step = 1, value = plankMass, align = 'left')
 Masses = wtext(text='{:1.2f}'.format(changeMassSlider.value) + ' - Mass (kg)' + '\n\n')
 def changeMass(evt):
     Masses.text = '{:1.2f}'.format(evt.value) + ' - Mass (kg)' + '\n\n'
@@ -76,6 +76,7 @@ def applyForces(b):
     applyingForces = not applyingForces
     if applyingForces: 
         b.text = "Stop, adjust sliders"
+        # RESET FUNCTION
     else: 
         b.text = "Apply forces!"
 
