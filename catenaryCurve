@@ -1,0 +1,22 @@
+ptsList = []
+a = 1
+for xVal in range(-5, 5, 0.1):
+    yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
+    ptsList.append(vec(xVal, yVal, 0))
+
+catCurve = curve(pos = ptsList, color = color.red)
+  
+changeModelCat = slider(bind=changeCat, min=1, max = 15, step = 0.1, value=1, align = 'left')  
+ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')
+
+def changeCat(evt):
+    global catCurve
+    catCurve.visible = False
+    ptsList = []
+    ModelCat.text = 'a = ' + '{:1.2f}'.format(evt.value) + '\n\n\n'
+    a = evt.value
+    for xVal in range(-5, 5, 0.1):
+        yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
+        ptsList.append(vec(xVal, yVal, 0))
+    newCurve = curve(pos = ptsList, color = color.red)
+    catCurve = newCurve
