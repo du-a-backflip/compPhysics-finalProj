@@ -4,7 +4,7 @@ scene.camera.pos = vector(0, 10, 70)
 planks = []
 plankLength = 4
 plankRadius = 2
-numPlanks = 5
+numPlanks = 10
 spacing = 5
 
 springs = []
@@ -27,18 +27,38 @@ cliff2 = box(pos = vec((numPlanks-1)*spacing/2+4.5, -5, plankLength/2), axis = v
 ### FORCES
 gravity = vector(0, 9.81, 0)
 plankMass = 50
-kCoef = 1500
+kCoef = 1000
 dCoef = 2*sqrt(plankMass*kCoef)
 
 ### USER INPUT
 #pedestrian
 person = ellipsoid(pos=vec(planks[0].pos.x, planks[0].pos.y+plankRadius+4, 0), length=4, height=8, width=4, color=color.cyan)
-#hyperbolic cosine curve
-changeModelCat = slider(bind=changeModelCat, min=0, max = 15, step = 1, value=0, align = 'left')
-ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')
-def changeModelCat(evt):
-    ModelCat.text = '{:1.2f}'.format(evt.value) + '\n\n\n'
 
+#hyperbolic cosine curve
+ptsList = []
+a = 1
+for xVal in range(-30, 30, 0.1):
+    yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
+    ptsList.append(vec(xVal, yVal + 20, -100))
+
+catCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
+  
+changeModelCat = slider(bind=changeCat, min=1, max = 15, step = 0.1, value=1, align = 'left')  
+ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')
+
+def changeCat(evt):
+    global catCurve
+    catCurve.visible = False
+    ptsList = []
+    ModelCat.text = 'a = ' + '{:1.2f}'.format(evt.value) + '\n\n\n'
+    a = evt.value
+    for xVal in range(-30, 30, 0.1):
+        yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
+        ptsList.append(vec(xVal, yVal + 20, -100))
+    newCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
+    catCurve = newCurve
+
+#change number of Planks
 changeNPlanksSlider = slider(bind=changeNPlanks, min=5, max=15, step = 1, value=numPlanks, align = 'left')
 NPlanks = wtext(text='{:1.2f}'.format(changeNPlanksSlider.value) + ' planks' + '\n\n')
 def changeNPlanks(evt):
@@ -54,7 +74,7 @@ DCoefs = wtext(text='{:1.2f}'.format(changeDConstSlider.value) + ' * Natural Dam
 def changeDConst(evt):
     DCoefs.text = '{:1.2f}'.format(evt.value) + ' * Natural Damping Constant' + '\n\n'
     
-changeMassSlider = slider(bind=changeMass, min = 50, max = 200, step = 1, value = plankMass, align = 'left')
+changeMassSlider = slider(bind=changeMass, min = 25, max = 75, step = 1, value = plankMass, align = 'left')
 Masses = wtext(text='{:1.2f}'.format(changeMassSlider.value) + ' - Mass (kg)' + '\n\n')
 def changeMass(evt):
     Masses.text = '{:1.2f}'.format(evt.value) + ' - Mass (kg)' + '\n\n'
@@ -76,7 +96,6 @@ def applyForces(b):
     applyingForces = not applyingForces
     if applyingForces: 
         b.text = "Stop, adjust sliders"
-        # RESET FUNCTION
     else: 
         b.text = "Apply forces!"
 
