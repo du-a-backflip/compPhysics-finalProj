@@ -24,26 +24,73 @@ for i in range(numSprings):
 cliff1 = box(pos = vec(-(numPlanks-1)*spacing/2-4.5, -5, plankLength/2), axis = vec(0, 0, 0), length = 5, height = 15, width = 5, texture = textures.granite)
 cliff2 = box(pos = vec((numPlanks-1)*spacing/2+4.5, -5, plankLength/2), axis = vec(0, 0, 0), length = 5, height = 15, width = 5, texture = textures.granite)
 
-person = ellipsoid(pos=vec(planks[0].pos.x, planks[0].pos.y+plankRadius+4, 0), length=4, height=8, width=4, color=color.cyan)
-    
+#Make person Shaped object
+personHead = sphere(pos=vec(0, 0, 0), radius = 2, color=color.cyan)
+personBody = cylinder(pos = vec(0, 0, 0), radius = 0.5, axis = vec(0, -8, 0), color = color.cyan)
+personLeg1 = cylinder(pos = vec(0, -8, 0), radius = 0.5, axis = vec(-2, -4, 0), color = color.cyan)
+personLeg2 = cylinder(pos = vec(0, -8, 0), radius = 0.5, axis = vec(2, -4, 0), color = color.cyan)
+personArm1 = cylinder(pos = vec(0, -4, 0), radius = 0.5, axis = vec(3, 2, 0), color = color.cyan)
+personArm2 = cylinder(pos = vec(0, -4, 0), radius = 0.5, axis = vec(-3, 2, 0), color = color.cyan)
+
+personParts = [personHead, personBody, personLeg1, personLeg2, personArm1, personArm2]
+personPlank = 0
+person = compound(personParts, pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0), axis=vec(1, 0, 0))
+
+person.mass = 500
+#person = ellipsoid(pos=vec(planks[0].pos.x, planks[0].pos.y+plankRadius+4, 0), length=4, height=8, width=4, color=color.cyan)
+
+#Move Person around
+def keyInput(evt):
+    global personPlank
+    global person
+    global planks
+    s = evt.key
+    if s == "left":
+        personPlank -= 1
+    if s == "right":
+        personPlank += 1
+    if personPlank < 0:
+        personPlank = 0
+    if personPlank > (len(planks) - 1):
+        personPlank = len(planks) - 1
+    person.pos = vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
+    print(personPlank)
+
+scene.bind('keydown', keyInput)
+
 ### FORCES
 gravity = vector(0, 9.81, 0)
 plankMass = 50
 kCoef = 1500
 dConst = 2*sqrt(plankMass*kCoef)
 
-### USER INPUT
+### USER INPUT;
 #hyperbolic cosine curve
 ptsList = []
 a = 1
+
+#firstPt = planks[0].pos.x
+#middlePt = planks[(len(planks)-1)/2].pos
+#lastPt = planks[len(planks)-1].pos.x
+
+#print(firstPt)
+#print(lastPt)
+
 for xVal in range(-30, 30, 0.1):
     yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
     ptsList.append(vec(xVal, yVal + 20, -100))
 catCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
-changeModelCat = slider(bind=changeCat, min=1, max = 15, step = 0.1, value=1, align = 'left')  
+changeModelCat = slider(bind=changeCat, min=1, max = 15, step = 0.1, value=1, align = 'left')
+
+
 ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')
+
+    
 def changeCat(evt):
     global catCurve
+    global firstPt
+    global middlePt
+    global lastPt
     catCurve.visible = False
     ptsList = []
     ModelCat.text = 'a = ' + '{:1.2f}'.format(evt.value) + '\n\n\n'
@@ -53,6 +100,7 @@ def changeCat(evt):
         ptsList.append(vec(xVal, yVal + 20, -100))
     newCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
     catCurve = newCurve    
+    
 #other sliders
 changeNPlanksSlider = slider(bind=changeNPlanks, min=5, max=15, step = 1, value=numPlanks, align = 'left')
 NPlanks = wtext(text= 'n planks: ' + '{:1.2f}'.format(changeNPlanksSlider.value) + '\n\n')
@@ -71,6 +119,7 @@ def changeDConst(evt):
     reset()
 changeMassSlider = slider(bind=changeMass, min = 50, max = 200, step = 1, value = plankMass, align = 'left')
 Masses = wtext(text='Mass: ' + '{:1.2f}'.format(changeMassSlider.value) + ' kg' + '\n\n')
+
 def changeMass(evt):
     Masses.text ='Mass: ' + '{:1.2f}'.format(evt.value) + ' kg' + '\n\n'
     reset()
@@ -99,6 +148,7 @@ def reset():
     global cliff1
     global cliff2
     global person
+    global personPlank
     
     for i in planks:
         i.visible = False
@@ -122,8 +172,9 @@ def reset():
         planks[i].springForceL = vector(0, 0, 0)
     for i in range(numSprings):
         springs[i] = helix(pos = vec(planks[i].pos.x+plankRadius, planks[i].pos.y, plankLength/2), axis = vec(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, planks[i+1].pos.y-planks[i].pos.y, 0), color = color.yellow, thickness = 1/10)
-
-    person.pos=vec(planks[0].pos.x, planks[0].pos.y+plankRadius+4, 0)
+    if personPlank > len(planks)-1:
+        personPlank = len(planks)-1
+    person.pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
 
     ### UPDATE VARIABLES
     kCoef = changeKCoefSlider.value
@@ -159,9 +210,13 @@ while (True):
             planks[i].springForceR = kCoef * deltaLR
             deltaLL = -(planks[i].pos-planks[i-1].pos)   # left adjacent plank
             planks[i].springForceL = kCoef * deltaLL
-            planks[i].acc = ((-gravity*plankMass) + (planks[i].springForceR+planks[i].springForceL) - planks[i].vel*dConst)/plankMass
+            if personPlank == i:
+                planks[i].acc = ((-gravity*(plankMass + person.mass)) + (planks[i].springForceR+planks[i].springForceL) - planks[i].vel*dConst)/(plankMass+person.mass)
+            else:
+                planks[i].acc = ((-gravity*plankMass) + (planks[i].springForceR+planks[i].springForceL) - planks[i].vel*dConst)/plankMass
             planks[i].vel = planks[i].vel + planks[i].acc*dt
             planks[i].pos = planks[i].pos + planks[i].vel*dt
+        person.pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
         for i in range(numSprings):     # move springs
             springs[i].pos = vector(planks[i].pos.x+plankRadius, planks[i].pos.y, plankLength/2)
             springs[i].axis = vector(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, planks[i+1].pos.y-planks[i].pos.y, 0)  
