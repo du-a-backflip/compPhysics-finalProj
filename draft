@@ -1,0 +1,110 @@
+Web VPython 3.2
+scene.camera.pos = vector(0, 20, 70)
+### DEFAULT SET UP
+planks = []
+plankLength = 4
+plankRadius = 2
+numPlanks = 5
+spacing = 5
+
+springs = []
+numSprings = numPlanks-1
+
+for i in range(numPlanks):
+    planks[i] = cylinder(pos = vec(-(numPlanks-1)*(spacing)/2 + spacing*i, 0.5, 0), axis = vec(0, 0, 1), color = vec(0.5, 0.25, 0), length = plankLength, radius = plankRadius)
+    planks[i].vel = vector(0, 0, 0)
+    planks[i].acc = vector(0, 0, 0)
+for i in range(1, numPlanks-1):
+    planks[i].springForceR = vector(0, 0, 0)
+    planks[i].springForceL = vector(0, 0, 0)
+    
+for i in range(numSprings):
+    springs[i] = helix(pos = vec(planks[i].pos.x+plankRadius, 0.5, plankLength/2), axis = vec(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, 0, 0), color = color.yellow, thickness = 1/10)
+
+cliff1 = box(pos = vec(-(numPlanks-1)*spacing/2-4.5, -5, plankLength/2), axis = vec(0, 0, 0), length = 5, height = 15, width = 5, texture = textures.granite)
+cliff2 = box(pos = vec((numPlanks-1)*spacing/2+4.5, -5, plankLength/2), axis = vec(0, 0, 0), length = 5, height = 15, width = 5, texture = textures.granite)
+
+#Make person Shaped object
+personHead = sphere(pos=vec(0, 0, 0), radius = 2, color=color.cyan)
+personBody = cylinder(pos = vec(0, 0, 0), radius = 0.5, axis = vec(0, -8, 0), color = color.cyan)
+personLeg1 = cylinder(pos = vec(0, -8, 0), radius = 0.5, axis = vec(-2, -4, 0), color = color.cyan)
+personLeg2 = cylinder(pos = vec(0, -8, 0), radius = 0.5, axis = vec(2, -4, 0), color = color.cyan)
+personArm1 = cylinder(pos = vec(0, -4, 0), radius = 0.5, axis = vec(3, 2, 0), color = color.cyan)
+personArm2 = cylinder(pos = vec(0, -4, 0), radius = 0.5, axis = vec(-3, 2, 0), color = color.cyan)
+
+personParts = [personHead, personBody, personLeg1, personLeg2, personArm1, personArm2]
+personPlank = 0
+person = compound(personParts, pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0), axis=vec(1, 0, 0))
+
+person.mass = 500
+#person = ellipsoid(pos=vec(planks[0].pos.x, planks[0].pos.y+plankRadius+4, 0), length=4, height=8, width=4, color=color.cyan)
+
+#Move Person around
+def keyInput(evt):
+    global personPlank
+    global person
+    global planks
+    s = evt.key
+    if s == "left":
+        personPlank -= 1
+    if s == "right":
+        personPlank += 1
+    if personPlank < 0:
+        personPlank = 0
+    if personPlank > (len(planks) - 1):
+        personPlank = len(planks) - 1
+    person.pos = vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
+    print(personPlank)
+
+scene.bind('keydown', keyInput)
+
+### FORCES
+gravity = vector(0, 9.81, 0)
+plankMass = 50
+kCoef = 1500
+dConst = 2*sqrt(plankMass*kCoef)
+
+### USER INPUT;
+#hyperbolic cosine curve
+ptsList = []
+a = 1
+
+#firstPt = planks[0].pos.x
+#middlePt = planks[(len(planks)-1)/2].pos
+#lastPt = planks[len(planks)-1].pos.x
+
+#print(firstPt)
+#print(lastPt)
+
+applyingForces = False
+button(bind = applyForces, text = "Apply forces!", pos = scene.title_anchor)
+def applyForces(b):
+    global applyingForces
+    applyingForces = not applyingForces
+    if applyingForces: 
+        b.text = "Stop, adjust sliders"
+    else: 
+        b.text = "Apply forces!"
+
+### RUNTIME
+dt = 0.1
+while (True):
+    rate(60)
+    if applyingForces:
+        
+        for i in range(1, numPlanks-1): # forces applied
+            deltaLR = planks[i+1].pos-planks[i].pos   # vector, this to right
+            planks[i].springForceR = kCoef * deltaLR
+            deltaLL = -(planks[i].pos-planks[i-1].pos)   # left adjacent plank
+            planks[i].springForceL = kCoef * deltaLL
+            if personPlank == i:
+                planks[i].acc = ((-gravity*(plankMass + person.mass)) + (planks[i].springForceR+planks[i].springForceL) - planks[i].vel*dConst)/(plankMass+person.mass)
+            else:
+                planks[i].acc = ((-gravity*plankMass) + (planks[i].springForceR+planks[i].springForceL) - planks[i].vel*dConst)/plankMass
+            planks[i].vel = planks[i].vel + planks[i].acc*dt
+            planks[i].pos = planks[i].pos + planks[i].vel*dt
+        person.pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
+        for i in range(numSprings):     # move springs
+            springs[i].pos = vector(planks[i].pos.x+plankRadius, planks[i].pos.y, plankLength/2)
+            springs[i].axis = vector(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, planks[i+1].pos.y-planks[i].pos.y, 0)  
+    else: 
