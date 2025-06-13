@@ -54,7 +54,6 @@ def keyInput(evt):
     if personPlank > (len(planks) - 1):
         personPlank = len(planks) - 1
     person.pos = vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
-    print(personPlank)
 
 scene.bind('keydown', keyInput)
 
@@ -66,26 +65,49 @@ dConst = 2*sqrt(plankMass*kCoef)
 
 ### USER INPUT;
 #hyperbolic cosine curve
-ptsList = []
-a = 1
+def findBridgeCat():
+    global planks
+    xVals = [plank.pos.x for plank in planks]
+    yVals = [plank.pos.y for plank in planks]
+    lowestDiff = 1e10
+    yAdj = 0
+    for i in range(1, 100, 0.1):
+        accVals = []
+        valDiff = 0
+        tempYDiff = 0
+        for j in range(len(planks)):
+            accVals.append((i/2) * (exp(xVals[j]/i)+ exp(-xVals[j]/i)))
+            valDiff += abs(yVals[j]-accVals[j])
+            tempYDiff += yVals[j]-accVals[j]
+        #print(valDiff)
+        if valDiff < lowestDiff:
+            yAdj = tempYDiff
+            lowestDiff = valDiff
+            a = i
+    return a, yAdj/len(planks)
 
-#firstPt = planks[0].pos.x
-#middlePt = planks[(len(planks)-1)/2].pos
-#lastPt = planks[len(planks)-1].pos.x
+a = findBridgeCat()[0]
+print(a)
+#yDiff = findBridgeCat()[1]
 
-#print(firstPt)
-#print(lastPt)
-
-for xVal in range(-30, 30, 0.1):
-    yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
-    ptsList.append(vec(xVal, yVal + 20, -100))
+def findCatPts():
+    global planks
+    global a
+    ptsList = []
+    xStart = planks[0].pos.x
+    xStop = planks[len(planks)-1].pos.x
+    #print(xStart)
+    #print(xStop)
+    for xVal in range(xStart, xStop,0.1):
+        yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
+        ptsList.append(vec(xVal, yVal + 20, -100))
+    return ptsList
+        
+ptsList = findCatPts()    
 catCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
-changeModelCat = slider(bind=changeCat, min=1, max = 15, step = 0.1, value=1, align = 'left')
-
-
-ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')
-
-    
+changeModelCat = slider(bind=changeCat, min=1, max = 50, step = 0.1, value=a, align = 'left')
+        
+ModelCat = wtext(text='a = ' + '{:1.2f}'.format(changeModelCat.value) + '\n\n\n')    
 def changeCat(evt):
     global catCurve
     global firstPt
@@ -95,9 +117,7 @@ def changeCat(evt):
     ptsList = []
     ModelCat.text = 'a = ' + '{:1.2f}'.format(evt.value) + '\n\n\n'
     a = evt.value
-    for xVal in range(-30, 30, 0.1):
-        yVal = (a/2) * (exp(xVal/a)+exp(-xVal/a))
-        ptsList.append(vec(xVal, yVal + 20, -100))
+    ptsList = findCatPts()
     newCurve = curve(pos = ptsList, color = color.red, radius = 1.5)
     catCurve = newCurve    
     
@@ -119,7 +139,6 @@ def changeDConst(evt):
     reset()
 changeMassSlider = slider(bind=changeMass, min = 50, max = 200, step = 1, value = plankMass, align = 'left')
 Masses = wtext(text='Mass: ' + '{:1.2f}'.format(changeMassSlider.value) + ' kg' + '\n\n')
-
 def changeMass(evt):
     Masses.text ='Mass: ' + '{:1.2f}'.format(evt.value) + ' kg' + '\n\n'
     reset()
@@ -152,6 +171,7 @@ def reset():
     
     for i in planks:
         i.visible = False
+        print(i.pos.x)
     for i in springs:
         i.visible = False
     planks = []
@@ -219,7 +239,9 @@ while (True):
         person.pos=vec(planks[personPlank].pos.x, planks[personPlank].pos.y+plankRadius+5, 0)
         for i in range(numSprings):     # move springs
             springs[i].pos = vector(planks[i].pos.x+plankRadius, planks[i].pos.y, plankLength/2)
-            springs[i].axis = vector(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, planks[i+1].pos.y-planks[i].pos.y, 0)  
+            springs[i].axis = vector(planks[i+1].pos.x-planks[i].pos.x-2*plankRadius, planks[i+1].pos.y-planks[i].pos.y, 0)
+        a = findBridgeCat()[0]
+        changeCat(a)
     else: 
         changeNPlanksSlider.disabled = False
         changeKCoefSlider.disabled = False
