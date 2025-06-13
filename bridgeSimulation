@@ -1,4 +1,15 @@
 Web VPython 3.2
+
+'''
+GOAL: This project aims to simulate forces applied to a suspension bridge, by variables of the main bridge itself, and by the external force of a pedestrian.
+USER INPUT - MAIN BRIDGE: Using sliders, the user can adjust these variables of the main bridge: 
+- # of planks
+- Spring constants of connecting springs
+- Natural damping constant
+- Mass of the planks
+- Heights of cliff 1 & cliff 2
+USER INPUT - EXTERNAL FORCE: Using the left and right arrow keys (‘<’ & ‘>’), the user can move the pedestrian from plank to plank.
+'''
 scene.camera.pos = vector(0, 20, 70)
 ### DEFAULT SET UP
 planks = []
